@@ -24,7 +24,8 @@ function App() {
     const newFolder: Folder = {
       id: crypto.randomUUID(),
       name,
-      sections: []
+      sections: [],
+      index: folders.length // Set the index to place the new folder at the end
     }
     setFolders([...folders, newFolder])
     setActiveFolder(newFolder.id)
@@ -45,11 +46,12 @@ function App() {
     setActiveSection(newSection.id)
   }
 
-  const handleAddSaveItem = (folderId: string, sectionId: string, name: string, value: string) => {
+  const handleAddSaveItem = (folderId: string, sectionId: string, name: string, value: string, sensitive: boolean = true) => {
     const newItem: SaveItem = {
       id: crypto.randomUUID(),
       name,
-      value
+      value,
+      sensitive
     }
 
     setFolders(folders.map(folder =>
@@ -71,7 +73,8 @@ function App() {
     sectionId: string,
     itemId: string,
     name: string,
-    value: string
+    value: string,
+    sensitive?: boolean
   ) => {
     setFolders(folders.map(folder =>
       folder.id === folderId
@@ -83,7 +86,12 @@ function App() {
                     ...section,
                     items: section.items.map(item =>
                       item.id === itemId
-                        ? { ...item, name, value }
+                        ? {
+                            ...item,
+                            name,
+                            value,
+                            sensitive: sensitive !== undefined ? sensitive : item.sensitive
+                          }
                         : item
                     )
                   }
@@ -194,6 +202,7 @@ function App() {
             onDeleteFolder={handleDeleteFolder}
             onSelectFolder={setActiveFolder}
             onSelectSection={setActiveSection}
+            onReorderFolders={setFolders}
           />
         </div>
       </main>

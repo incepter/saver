@@ -5,8 +5,8 @@ import SaveItemComponent from './SaveItemComponent';
 interface SectionItemProps {
   section: Section;
   folderId: string;
-  onAddSaveItem: (folderId: string, sectionId: string, name: string, value: string) => void;
-  onUpdateSaveItem: (folderId: string, sectionId: string, itemId: string, name: string, value: string) => void;
+  onAddSaveItem: (folderId: string, sectionId: string, name: string, value: string, sensitive?: boolean) => void;
+  onUpdateSaveItem: (folderId: string, sectionId: string, itemId: string, name: string, value: string, sensitive?: boolean) => void;
   onDeleteSaveItem: (folderId: string, sectionId: string, itemId: string) => void;
   onDeleteSection: (folderId: string, sectionId: string) => void;
 }
@@ -22,12 +22,14 @@ const SectionItem: React.FC<SectionItemProps> = ({
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemValue, setNewItemValue] = useState('');
+  const [newItemSensitive, setNewItemSensitive] = useState(true); // Default to sensitive
 
   const handleAddItem = () => {
     if (newItemName.trim() && newItemValue.trim()) {
-      onAddSaveItem(folderId, section.id, newItemName.trim(), newItemValue.trim());
+      onAddSaveItem(folderId, section.id, newItemName.trim(), newItemValue.trim(), newItemSensitive);
       setNewItemName('');
       setNewItemValue('');
+      setNewItemSensitive(true); // Reset to default
       setIsAddingItem(false);
     }
   };
@@ -87,7 +89,17 @@ const SectionItem: React.FC<SectionItemProps> = ({
               placeholder="Item value"
               rows={3}
             />
-            <div className="flex justify-end space-x-2">
+            <div className="flex items-center mt-2">
+              <input
+                type="checkbox"
+                id="new-item-sensitive"
+                checked={newItemSensitive}
+                onChange={(e) => setNewItemSensitive(e.target.checked)}
+                className="mr-2"
+              />
+              <label htmlFor="new-item-sensitive" className="text-sm">Sensitive (hide by default)</label>
+            </div>
+            <div className="flex justify-end space-x-2 mt-2">
               <button
                 type="submit"
                 className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
