@@ -80,7 +80,7 @@ const FolderList: React.FC<FolderListProps> = ({
     dragCounter.current++;
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = () => {
     dragCounter.current--;
     if (dragCounter.current === 0) {
       setDragOverFolder(null);

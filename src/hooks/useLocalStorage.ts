@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Folder, SaveItem } from '../types';
+import { Folder } from '../types';
 
 // Function to sanitize folders data for backward compatibility
 const sanitizeFolders = (folders: Folder[]): Folder[] => {
