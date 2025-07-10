@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-pwa-cache-v1'; // Update version to force refresh on app update
+const CACHE_NAME = 'saver-sw-cache-v0-1-2'; // Update version to force refresh on app update
 
 // Service worker install event: Pre-cache assets (optional; could skip this)
 self.addEventListener('install', (event) => {
