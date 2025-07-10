@@ -103,8 +103,8 @@ const FolderList: React.FC<FolderListProps> = ({
 
     // Create a new array with the reordered folders
     const newFolders = [...folders];
-    const [draggedFolder] = newFolders.splice(draggedIndex, 1);
-    newFolders.splice(targetIndex, 0, draggedFolder);
+    const [draggedFolderItem] = newFolders.splice(draggedIndex, 1);
+    newFolders.splice(targetIndex, 0, draggedFolderItem);
 
     // Update the index property of each folder
     const updatedFolders = newFolders.map((folder, index) => ({
@@ -176,7 +176,7 @@ const FolderList: React.FC<FolderListProps> = ({
           {folders.length === 0 ? (
             <p className="text-gray-500 text-sm">No folders yet. Create one to get started!</p>
           ) : (
-            folders.map((folder) => (
+            [...folders].sort((a, b) => (a.index || 0) - (b.index || 0)).map((folder) => (
               <div
                 key={folder.id}
                 className={`p-2 rounded cursor-pointer group ${

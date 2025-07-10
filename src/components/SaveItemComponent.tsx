@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { SaveItem } from '../types';
 
 // Helper function to check if a string is a URL
@@ -29,6 +29,11 @@ const SaveItemComponent: React.FC<SaveItemComponentProps> = ({
   const [editSensitive, setEditSensitive] = useState(item.sensitive !== false); // Default to true if undefined
   const [copySuccess, setCopySuccess] = useState(false);
   const valueRef = useRef<HTMLDivElement>(null);
+
+  // Update visibility state when item sensitivity changes
+  useEffect(() => {
+    setIsVisible(item.sensitive === false);
+  }, [item.sensitive]);
 
   const handleEdit = () => {
     if (editName.trim() && editValue.trim()) {
