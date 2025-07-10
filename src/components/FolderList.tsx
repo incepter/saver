@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Folder } from '../types';
 import FolderItem from './FolderItem';
 
@@ -15,6 +15,7 @@ interface FolderListProps {
   onDeleteFolder: (folderId: string) => void;
   onSelectFolder: (folderId: string | null) => void;
   onSelectSection: (sectionId: string | null) => void;
+  onReorderFolders?: (folders: Folder[]) => void;
 }
 
 const FolderList: React.FC<FolderListProps> = ({
@@ -29,10 +30,14 @@ const FolderList: React.FC<FolderListProps> = ({
   onDeleteSection,
   onDeleteFolder,
   onSelectFolder,
-  onSelectSection
+  onSelectSection,
+  onReorderFolders
 }) => {
   const [newFolderName, setNewFolderName] = useState('');
   const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [draggedFolder, setDraggedFolder] = useState<string | null>(null);
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+  const dragCounter = useRef<number>(0);
 
   const handleAddFolder = () => {
     if (newFolderName.trim()) {
@@ -40,6 +45,80 @@ const FolderList: React.FC<FolderListProps> = ({
       setNewFolderName('');
       setIsAddingFolder(false);
     }
+  };
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, folderId: string) => {
+    setDraggedFolder(folderId);
+    e.dataTransfer.effectAllowed = 'move';
+    // Add some transparency to the dragged element
+    if (e.currentTarget) {
+      setTimeout(() => {
+        e.currentTarget.style.opacity = '0.4';
+      }, 0);
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    setDraggedFolder(null);
+    setDragOverFolder(null);
+    // Reset opacity
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = '1';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, folderId: string) => {
+    e.preventDefault();
+    if (draggedFolder === folderId) return;
+    setDragOverFolder(folderId);
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    dragCounter.current++;
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setDragOverFolder(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetFolderId: string) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+
+    if (!draggedFolder || draggedFolder === targetFolderId) {
+      setDraggedFolder(null);
+      setDragOverFolder(null);
+      return;
+    }
+
+    // Find the indices of the dragged and target folders
+    const draggedIndex = folders.findIndex(f => f.id === draggedFolder);
+    const targetIndex = folders.findIndex(f => f.id === targetFolderId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    // Create a new array with the reordered folders
+    const newFolders = [...folders];
+    const [draggedFolder] = newFolders.splice(draggedIndex, 1);
+    newFolders.splice(targetIndex, 0, draggedFolder);
+
+    // Update the index property of each folder
+    const updatedFolders = newFolders.map((folder, index) => ({
+      ...folder,
+      index
+    }));
+
+    // Update the folders state
+    if (onReorderFolders) {
+      onReorderFolders(updatedFolders);
+    }
+
+    setDraggedFolder(null);
+    setDragOverFolder(null);
   };
 
   return (
@@ -104,8 +183,22 @@ const FolderList: React.FC<FolderListProps> = ({
                   activeFolder === folder.id
                     ? 'bg-blue-100 dark:bg-blue-900'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={() => onSelectFolder(folder.id)}
+                } ${dragOverFolder === folder.id ? 'border-2 border-blue-500' : ''}`}
+                onClick={() => {
+                  onSelectFolder(folder.id);
+                  // Auto-select the first section if available
+                  const selectedFolder = folders.find(f => f.id === folder.id);
+                  if (selectedFolder && selectedFolder.sections.length > 0) {
+                    onSelectSection(selectedFolder.sections[0].id);
+                  }
+                }}
+                draggable
+                onDragStart={(e) => handleDragStart(e, folder.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, folder.id)}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, folder.id)}
               >
                 <div className="flex justify-between items-center">
                   <span className="truncate">{folder.name}</span>
