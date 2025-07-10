@@ -1,5 +1,5 @@
 // URL of the Saver app
-const APP_URL = 'http://localhost:9999/'; // Change this to your deployed app URL in production
+const APP_URL = 'https://incepter.github.io/saver/'; // Change this to your deployed app URL in production
 
 // Listen for extension icon clicks
 chrome.action.onClicked.addListener((tab) => {

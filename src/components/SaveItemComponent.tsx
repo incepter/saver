@@ -1,11 +1,16 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { SaveItem } from '../types';
+
+// Helper function to check if a string is a URL
+const isUrl = (str: string): boolean => {
+  return str.startsWith('http://') || str.startsWith('https://');
+};
 
 interface SaveItemComponentProps {
   item: SaveItem;
   folderId: string;
   sectionId: string;
-  onUpdateSaveItem: (folderId: string, sectionId: string, itemId: string, name: string, value: string) => void;
+  onUpdateSaveItem: (folderId: string, sectionId: string, itemId: string, name: string, value: string, sensitive?: boolean) => void;
   onDeleteSaveItem: (folderId: string, sectionId: string, itemId: string) => void;
 }
 
@@ -17,15 +22,22 @@ const SaveItemComponent: React.FC<SaveItemComponentProps> = ({
   onDeleteSaveItem
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  // Initialize visibility based on sensitivity
+  const [isVisible, setIsVisible] = useState(item.sensitive === false);
   const [editName, setEditName] = useState(item.name);
   const [editValue, setEditValue] = useState(item.value);
+  const [editSensitive, setEditSensitive] = useState(item.sensitive !== false); // Default to true if undefined
   const [copySuccess, setCopySuccess] = useState(false);
   const valueRef = useRef<HTMLDivElement>(null);
 
+  // Update visibility state when item sensitivity changes
+  useEffect(() => {
+    setIsVisible(item.sensitive === false);
+  }, [item.sensitive]);
+
   const handleEdit = () => {
     if (editName.trim() && editValue.trim()) {
-      onUpdateSaveItem(folderId, sectionId, item.id, editName.trim(), editValue.trim());
+      onUpdateSaveItem(folderId, sectionId, item.id, editName.trim(), editValue.trim(), editSensitive);
       setIsEditing(false);
     }
   };
@@ -69,7 +81,17 @@ const SaveItemComponent: React.FC<SaveItemComponentProps> = ({
             placeholder="Item value"
             rows={3}
           />
-          <div className="flex justify-end space-x-2">
+          <div className="flex items-center mt-2">
+            <input
+              type="checkbox"
+              id={`sensitive-${item.id}`}
+              checked={editSensitive}
+              onChange={(e) => setEditSensitive(e.target.checked)}
+              className="mr-2"
+            />
+            <label htmlFor={`sensitive-${item.id}`} className="text-sm">Sensitive (hide by default)</label>
+          </div>
+          <div className="flex justify-end space-x-2 mt-2">
             <button
               className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
               onClick={handleEdit}
@@ -119,6 +141,21 @@ const SaveItemComponent: React.FC<SaveItemComponentProps> = ({
                   <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                 </svg>
               </button>
+              {isVisible && isUrl(item.value) && (
+                <a
+                  href={item.value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 text-blue-500 hover:text-blue-600 rounded"
+                  title="Open link in new tab"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                    <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                  </svg>
+                </a>
+              )}
               <button
                 className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded"
                 onClick={() => setIsEditing(true)}

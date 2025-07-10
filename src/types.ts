@@ -2,6 +2,7 @@ export interface SaveItem {
   id: string;
   name: string;
   value: string;
+  sensitive?: boolean;
 }
 
 export interface Section {
@@ -14,4 +15,5 @@ export interface Folder {
   id: string;
   name: string;
   sections: Section[];
+  index?: number;
 }

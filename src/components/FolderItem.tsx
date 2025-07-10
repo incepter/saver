@@ -6,8 +6,8 @@ interface FolderItemProps {
   folder: Folder;
   activeSection: string | null;
   onAddSection: (folderId: string, name: string) => void;
-  onAddSaveItem: (folderId: string, sectionId: string, name: string, value: string) => void;
-  onUpdateSaveItem: (folderId: string, sectionId: string, itemId: string, name: string, value: string) => void;
+  onAddSaveItem: (folderId: string, sectionId: string, name: string, value: string, sensitive?: boolean) => void;
+  onUpdateSaveItem: (folderId: string, sectionId: string, itemId: string, name: string, value: string, sensitive?: boolean) => void;
   onDeleteSaveItem: (folderId: string, sectionId: string, itemId: string) => void;
   onDeleteSection: (folderId: string, sectionId: string) => void;
   onSelectSection: (sectionId: string | null) => void;

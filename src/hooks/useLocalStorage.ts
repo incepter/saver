@@ -1,4 +1,20 @@
 import { useState, useEffect } from 'react';
+import { Folder, SaveItem } from '../types';
+
+// Function to sanitize folders data for backward compatibility
+const sanitizeFolders = (folders: Folder[]): Folder[] => {
+  return folders.map((folder, index) => ({
+    ...folder,
+    index: folder.index !== undefined ? folder.index : index,
+    sections: folder.sections.map(section => ({
+      ...section,
+      items: section.items.map(item => ({
+        ...item,
+        sensitive: item.sensitive !== undefined ? item.sensitive : true // Default to sensitive
+      }))
+    }))
+  }));
+};
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
   // Get stored value from localStorage or use initialValue
@@ -9,7 +25,16 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
 
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      if (!item) return initialValue;
+
+      const parsedItem = JSON.parse(item);
+
+      // If this is the folders data, sanitize it for backward compatibility
+      if (key === 'saver-folders' && Array.isArray(parsedItem)) {
+        return sanitizeFolders(parsedItem) as unknown as T;
+      }
+
+      return parsedItem;
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
       return initialValue;
