@@ -53,7 +53,9 @@ const FolderList: React.FC<FolderListProps> = ({
     // Add some transparency to the dragged element
     if (e.currentTarget) {
       setTimeout(() => {
-        e.currentTarget.style.opacity = '0.4';
+        if (e.currentTarget) {
+          e.currentTarget.style.opacity = '0.4';
+        }
       }, 0);
     }
   };
@@ -114,6 +116,7 @@ const FolderList: React.FC<FolderListProps> = ({
 
     // Update the folders state
     if (onReorderFolders) {
+      // Ensure the updated folders are persisted
       onReorderFolders(updatedFolders);
     }
 
@@ -176,7 +179,7 @@ const FolderList: React.FC<FolderListProps> = ({
           {folders.length === 0 ? (
             <p className="text-gray-500 text-sm">No folders yet. Create one to get started!</p>
           ) : (
-            [...folders].sort((a, b) => (a.index || 0) - (b.index || 0)).map((folder) => (
+            [...folders].sort((a, b) => ((a.index !== undefined ? a.index : 0) - (b.index !== undefined ? b.index : 0))).map((folder) => (
               <div
                 key={folder.id}
                 className={`p-2 rounded cursor-pointer group ${

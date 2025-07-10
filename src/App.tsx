@@ -24,7 +24,8 @@ function App() {
     const newFolder: Folder = {
       id: crypto.randomUUID(),
       name,
-      sections: []
+      sections: [],
+      index: folders.length // Set the index to place the new folder at the end
     }
     setFolders([...folders, newFolder])
     setActiveFolder(newFolder.id)
