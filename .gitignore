@@ -36,18 +36,9 @@ logs/
 
 application-local.yml
 application-local.yaml
-src/main/resources/serviceAccountKey.local.json
-middleware/performance-tests/src/main/resources/application-dev.yml
 
 ignore/*
-middleware/fatourati/ignore/*
 src/test/**/**/ignore/*
-
-# Ignore dependency-check reports
-middleware/**/dependency-check-report.*
-
-# Ignore SonarQube scanner files
-middleware/**/.scannerwork/
 
 # dependencies
 /node_modules
