@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import FolderList from './components/FolderList'
 import ExportImport from './components/ExportImport'
+import SearchComponent from './components/SearchComponent'
 import { Folder, Section, SaveItem } from './types'
 import { useLocalStorage } from './hooks/useLocalStorage'
 
@@ -212,6 +213,11 @@ function App() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
+          <SearchComponent
+            folders={folders}
+            onUpdateSaveItem={handleUpdateSaveItem}
+            onDeleteSaveItem={handleDeleteSaveItem}
+          />
           <FolderList
             folders={folders}
             activeFolder={activeFolder}
