@@ -48,11 +48,16 @@ function App() {
   }
 
   const handleAddSaveItem = (folderId: string, sectionId: string, name: string, value: string, sensitive: boolean = true) => {
+    const folder = folders.find(f => f.id === folderId);
+    const section = folder?.sections.find(s => s.id === sectionId);
+    const itemCount = section?.items.length || 0;
+
     const newItem: SaveItem = {
       id: crypto.randomUUID(),
       name,
       value,
-      sensitive
+      sensitive,
+      index: itemCount // Set the index to place the new item at the end
     }
 
     setFolders(folders.map(folder =>
@@ -187,6 +192,98 @@ function App() {
     }
   }
 
+  const handleReorderItems = (folderId: string, sectionId: string, reorderedItems: SaveItem[]) => {
+    // Update the index property of each item based on its new position
+    const updatedItems = reorderedItems.map((item, index) => ({
+      ...item,
+      index
+    }));
+
+    // Update the folders state with the reordered items
+    setFolders(folders.map(folder =>
+      folder.id === folderId
+        ? {
+            ...folder,
+            sections: folder.sections.map(section =>
+              section.id === sectionId
+                ? { ...section, items: updatedItems }
+                : section
+            )
+          }
+        : folder
+    ));
+  }
+
+  const handleMoveItemToSection = (
+    sourceFolderId: string,
+    sourceSectionId: string,
+    itemId: string,
+    targetFolderId: string,
+    targetSectionId: string
+  ) => {
+    // Find the item to move
+    const sourceFolder = folders.find(f => f.id === sourceFolderId);
+    const sourceSection = sourceFolder?.sections.find(s => s.id === sourceSectionId);
+    const itemToMove = sourceSection?.items.find(i => i.id === itemId);
+
+    if (!itemToMove) return;
+
+    // Find the target section to determine the new index
+    const targetFolder = folders.find(f => f.id === targetFolderId);
+    const targetSection = targetFolder?.sections.find(s => s.id === targetSectionId);
+    const targetItemCount = targetSection?.items.length || 0;
+
+    // Create a copy of the item with the new index (at the end of the target section)
+    const movedItem = {
+      ...itemToMove,
+      index: targetItemCount
+    };
+
+    // Update the folders state: remove from source section and add to target section
+    setFolders(folders.map(folder => {
+      // Handle source folder
+      if (folder.id === sourceFolderId) {
+        return {
+          ...folder,
+          sections: folder.sections.map(section => {
+            // Remove from source section
+            if (section.id === sourceSectionId) {
+              return {
+                ...section,
+                items: section.items.filter(item => item.id !== itemId)
+              };
+            }
+            // If this is also the target section in the same folder, add the item
+            if (sourceFolderId === targetFolderId && section.id === targetSectionId) {
+              return {
+                ...section,
+                items: [...section.items, movedItem]
+              };
+            }
+            return section;
+          })
+        };
+      }
+      // Handle target folder (if different from source)
+      if (folder.id === targetFolderId && sourceFolderId !== targetFolderId) {
+        return {
+          ...folder,
+          sections: folder.sections.map(section => {
+            // Add to target section
+            if (section.id === targetSectionId) {
+              return {
+                ...section,
+                items: [...section.items, movedItem]
+              };
+            }
+            return section;
+          })
+        };
+      }
+      return folder;
+    }));
+  }
+
   const handleImport = (data: Folder[]) => {
     setFolders(data)
     if (data.length > 0) {
@@ -234,6 +331,8 @@ function App() {
             onSelectFolder={setActiveFolder}
             onSelectSection={setActiveSection}
             onReorderFolders={setFolders}
+            onReorderItems={handleReorderItems}
+            onMoveItemToSection={handleMoveItemToSection}
           />
         </div>
       </main>

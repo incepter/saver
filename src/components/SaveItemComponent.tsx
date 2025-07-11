@@ -68,9 +68,9 @@ const SaveItemComponent: React.FC<SaveItemComponentProps> = ({
 
   return (
     <div
-      className="border rounded-lg p-3 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm">
+      className="border rounded-lg p-3 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm pointer-events-none">
       {isEditing ? (
-        <div className="space-y-2">
+        <div className="space-y-2 pointer-events-auto">
           <input
             type="text"
             className="w-full border rounded p-2 text-sm dark:bg-gray-700 dark:border-gray-600"
@@ -119,24 +119,28 @@ const SaveItemComponent: React.FC<SaveItemComponentProps> = ({
       ) : (
         <div className="flex flex-col">
           <div className="flex justify-between items-start">
-            <div className="flex-1 mr-4">
-              <div className="flex items-center mb-1">
-                <h4 className="font-medium mr-2">{item.name}:</h4>
+            <div className="flex-1 mr-4 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center mb-1">
+                <h4
+                  className="font-medium sm:mr-2 text-md whitespace-nowrap max-w-full relative text-ellipsis overflow-hidden w-max">{item.name}:</h4>
                 {isVisible ? (
                   <div
                     ref={valueRef}
-                    className="text-sm break-all flex-1"
+                    style={{
+                      // maskImage: 'linear-gradient(to right, black 85%, transparent 100%)',
+                      // WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)'
+                    }}
                   >
                     {item.value}
                   </div>
                 ) : (
-                  <div className="text-sm">
+                  <div className="text-sm whitespace-nowrap">
                     ••••••••••••••••
                   </div>
                 )}
               </div>
             </div>
-            <div className="flex space-x-2 flex-shrink-0">
+            <div className="flex space-x-2 flex-shrink-0 pointer-events-auto">
               {isUrl(item.value) && (
                 <a
                   href={item.value}
