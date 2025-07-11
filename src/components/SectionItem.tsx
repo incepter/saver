@@ -5,10 +5,17 @@ import SaveItemComponent from './SaveItemComponent';
 interface SectionItemProps {
   section: Section;
   folderId: string;
-  onAddSaveItem: (folderId: string, sectionId: string, name: string, value: string, sensitive?: boolean) => void;
+  onAddSaveItem: (
+    folderId: string, sectionId: string, name: string, value: string,
+    sensitive?: boolean
+  ) => void;
   onUpdateSection: (folderId: string, sectionId: string, name: string) => void;
-  onUpdateSaveItem: (folderId: string, sectionId: string, itemId: string, name: string, value: string, sensitive?: boolean) => void;
-  onDeleteSaveItem: (folderId: string, sectionId: string, itemId: string) => void;
+  onUpdateSaveItem: (
+    folderId: string, sectionId: string, itemId: string, name: string,
+    value: string, sensitive?: boolean
+  ) => void;
+  onDeleteSaveItem: (
+    folderId: string, sectionId: string, itemId: string) => void;
   onDeleteSection: (folderId: string, sectionId: string) => void;
 }
 
@@ -16,10 +23,8 @@ const SectionItem: React.FC<SectionItemProps> = ({
   section,
   folderId,
   onAddSaveItem,
-  onUpdateSection,
   onUpdateSaveItem,
   onDeleteSaveItem,
-  onDeleteSection,
 }) => {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [newItemName, setNewItemName] = useState('');
@@ -44,8 +49,11 @@ const SectionItem: React.FC<SectionItemProps> = ({
           onClick={() => setIsAddingItem(true)}
           title="Add new item"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1"
+               viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd"
+                  d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z"
+                  clipRule="evenodd"/>
           </svg>
           Add Item
         </button>
@@ -84,7 +92,8 @@ const SectionItem: React.FC<SectionItemProps> = ({
                 onChange={(e) => setNewItemSensitive(e.target.checked)}
                 className="mr-2"
               />
-              <label htmlFor="new-item-sensitive" className="text-sm">Sensitive (hide by default)</label>
+              <label htmlFor="new-item-sensitive" className="text-sm">Sensitive
+                (hide by default)</label>
             </div>
             <div className="flex justify-end space-x-2 mt-2">
               <button
