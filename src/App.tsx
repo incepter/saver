@@ -68,6 +68,29 @@ function App() {
     ))
   }
 
+  const handleUpdateFolder = (folderId: string, name: string) => {
+    setFolders(folders.map(folder =>
+      folder.id === folderId
+        ? { ...folder, name }
+        : folder
+    ))
+  }
+
+  const handleUpdateSection = (folderId: string, sectionId: string, name: string) => {
+    setFolders(folders.map(folder =>
+      folder.id === folderId
+        ? {
+            ...folder,
+            sections: folder.sections.map(section =>
+              section.id === sectionId
+                ? { ...section, name }
+                : section
+            )
+          }
+        : folder
+    ))
+  }
+
   const handleUpdateSaveItem = (
     folderId: string,
     sectionId: string,
@@ -196,6 +219,8 @@ function App() {
             onAddFolder={handleAddFolder}
             onAddSection={handleAddSection}
             onAddSaveItem={handleAddSaveItem}
+            onUpdateFolder={handleUpdateFolder}
+            onUpdateSection={handleUpdateSection}
             onUpdateSaveItem={handleUpdateSaveItem}
             onDeleteSaveItem={handleDeleteSaveItem}
             onDeleteSection={handleDeleteSection}
