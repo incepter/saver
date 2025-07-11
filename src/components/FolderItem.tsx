@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {Folder} from '../types';
+import {useEffect, useState, useRef} from 'react';
+import {Folder, SaveItem} from '../types';
 import SectionItem from './SectionItem';
 
 interface FolderItemProps {
@@ -19,6 +19,11 @@ interface FolderItemProps {
     folderId: string, sectionId: string, itemId: string) => void;
   onDeleteSection: (folderId: string, sectionId: string) => void;
   onSelectSection: (sectionId: string | null) => void;
+  onReorderItems?: (folderId: string, sectionId: string, items: SaveItem[]) => void;
+  onMoveItemToSection?: (
+    sourceFolderId: string, sourceSectionId: string, itemId: string,
+    targetFolderId: string, targetSectionId: string
+  ) => void;
 }
 
 const FolderItem: React.FC<FolderItemProps> = ({
@@ -30,12 +35,20 @@ const FolderItem: React.FC<FolderItemProps> = ({
   onUpdateSaveItem,
   onDeleteSaveItem,
   onDeleteSection,
-  onSelectSection
+  onSelectSection,
+  onReorderItems,
+  onMoveItemToSection
 }) => {
   const [newSectionName, setNewSectionName] = useState('');
   const [isAddingSection, setIsAddingSection] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState({top: 0, left: 0});
+
+  // Drag and drop state
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [draggedItemSectionId, setDraggedItemSectionId] = useState<string | null>(null);
+  const [dragOverSection, setDragOverSection] = useState<string | null>(null);
+  const dragCounter = useRef<{[key: string]: number}>({});
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -91,6 +104,123 @@ const FolderItem: React.FC<FolderItemProps> = ({
 
     setOpenDropdownId(openDropdownId === sectionId ? null : sectionId);
   };
+
+  // Drag and drop handlers for section tabs
+  const handleSectionDragOver = (e: React.DragEvent<HTMLDivElement>, sectionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Set the drop effect to move
+    e.dataTransfer.dropEffect = 'move';
+
+    if (draggedItem && draggedItemSectionId !== sectionId) {
+      setDragOverSection(sectionId);
+    }
+  };
+
+  const handleSectionDragEnter = (e: React.DragEvent<HTMLDivElement>, sectionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Initialize counter for this section if it doesn't exist
+    if (!dragCounter.current[sectionId]) {
+      dragCounter.current[sectionId] = 0;
+    }
+
+    dragCounter.current[sectionId]++;
+    setDragOverSection(sectionId);
+  };
+
+  const handleSectionDragLeave = (e: React.DragEvent<HTMLDivElement>, sectionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Decrement counter for this section
+    if (dragCounter.current[sectionId]) {
+      dragCounter.current[sectionId]--;
+    }
+
+    // Only clear highlight if counter is 0
+    if (dragCounter.current[sectionId] === 0) {
+      setDragOverSection(null);
+    }
+  };
+
+  const handleSectionDrop = (e: React.DragEvent<HTMLDivElement>, targetSectionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Reset counter
+    dragCounter.current[targetSectionId] = 0;
+
+    // Get the dragged item ID from dataTransfer
+    const droppedItemId = e.dataTransfer.getData('text/plain');
+
+    if (!droppedItemId || !draggedItemSectionId || draggedItemSectionId === targetSectionId) {
+      setDraggedItem(null);
+      setDraggedItemSectionId(null);
+      setDragOverSection(null);
+      return;
+    }
+
+    // Call the handler to move the item to the target section
+    if (onMoveItemToSection) {
+      onMoveItemToSection(folder.id, draggedItemSectionId, droppedItemId, folder.id, targetSectionId);
+    }
+
+    setDraggedItem(null);
+    setDraggedItemSectionId(null);
+    setDragOverSection(null);
+  };
+
+  // Listen for drag events from SectionItem
+  useEffect(() => {
+    const handleDragStart = (e: DragEvent) => {
+      if (e.target) {
+        const target = e.target as HTMLElement;
+
+        // Find the closest section container
+        const sectionContainer = target.closest('[data-section-id]');
+        if (sectionContainer) {
+          const sectionId = sectionContainer.getAttribute('data-section-id');
+
+          // We can't access dataTransfer.getData during dragstart due to security restrictions
+          // Instead, we'll set the dragged item ID when the dragstart event is fired
+          // and the section ID from the container
+          if (sectionId) {
+            // We'll set the dragged item ID when we get the item ID from the custom event
+            setDraggedItemSectionId(sectionId);
+          }
+        }
+      }
+    };
+
+    const handleDragEnd = () => {
+      setDraggedItem(null);
+      setDraggedItemSectionId(null);
+      setDragOverSection(null);
+      dragCounter.current = {};
+    };
+
+    // Custom event handler to get the dragged item ID
+    const handleItemDragStart = (e: CustomEvent) => {
+      if (e.detail && e.detail.itemId) {
+        setDraggedItem(e.detail.itemId);
+      }
+    };
+
+    // Add global event listeners
+    document.addEventListener('dragstart', handleDragStart);
+    document.addEventListener('dragend', handleDragEnd);
+    document.addEventListener('item-drag-start', handleItemDragStart as EventListener);
+
+    return () => {
+      // Clean up event listeners
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('dragend', handleDragEnd);
+      document.removeEventListener('item-drag-start', handleItemDragStart as EventListener);
+    };
+  }, []);
 
   return (
     <div>
@@ -164,6 +294,11 @@ const FolderItem: React.FC<FolderItemProps> = ({
                 <div
                   key={section.id}
                   className="relative group"
+                  data-section-id={section.id}
+                  onDragOver={(e) => handleSectionDragOver(e, section.id)}
+                  onDragEnter={(e) => handleSectionDragEnter(e, section.id)}
+                  onDragLeave={(e) => handleSectionDragLeave(e, section.id)}
+                  onDrop={(e) => handleSectionDrop(e, section.id)}
                 >
                   <div className="flex items-center">
                     <button
@@ -171,10 +306,15 @@ const FolderItem: React.FC<FolderItemProps> = ({
                         activeSection === section.id
                           ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                      }`}
+                      } ${dragOverSection === section.id ? 'bg-blue-50 dark:bg-blue-900 border-dashed' : ''}`}
                       onClick={() => onSelectSection(section.id)}
                     >
                       {section.name}
+                      {dragOverSection === section.id && draggedItem && (
+                        <span className="ml-1 text-xs text-blue-500">
+                          (Drop here)
+                        </span>
+                      )}
                     </button>
                     <div className="static">
                       <button
@@ -261,6 +401,9 @@ const FolderItem: React.FC<FolderItemProps> = ({
               onUpdateSaveItem={onUpdateSaveItem}
               onDeleteSaveItem={onDeleteSaveItem}
               onDeleteSection={onDeleteSection}
+              onReorderItems={onReorderItems}
+              onMoveItemToSection={onMoveItemToSection}
+              allSections={folder.sections}
             />
           )}
         </div>
