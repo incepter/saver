@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Folder } from '../types';
+import { Folder, SaveItem } from '../types';
 import FolderItem from './FolderItem';
 
 interface FolderListProps {

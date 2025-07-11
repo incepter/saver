@@ -33,7 +33,6 @@ const SectionItem: React.FC<SectionItemProps> = ({
   onUpdateSaveItem,
   onDeleteSaveItem,
   onReorderItems,
-  onMoveItemToSection,
 }) => {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [newItemName, setNewItemName] = useState('');
