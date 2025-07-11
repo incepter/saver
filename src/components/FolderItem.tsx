@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import {Folder} from '../types';
 import SectionItem from './SectionItem';
 
@@ -34,6 +34,26 @@ const FolderItem: React.FC<FolderItemProps> = ({
 }) => {
   const [newSectionName, setNewSectionName] = useState('');
   const [isAddingSection, setIsAddingSection] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Close dropdown when clicking outside
+      if (openDropdownId !== null) {
+        const dropdownElement = document.querySelector(`[data-dropdown-id="${openDropdownId}"]`);
+        if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
+          setOpenDropdownId(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdownId]);
 
   const handleAddSection = () => {
     if (newSectionName.trim()) {
@@ -41,6 +61,35 @@ const FolderItem: React.FC<FolderItemProps> = ({
       setNewSectionName('');
       setIsAddingSection(false);
     }
+  };
+
+  const toggleDropdown = (e: React.MouseEvent, sectionId: string) => {
+    e.stopPropagation();
+
+    // If we're opening the dropdown, calculate its position
+    if (openDropdownId !== sectionId) {
+      const button = e.currentTarget as HTMLElement;
+      const rect = button.getBoundingClientRect();
+
+      // Get viewport dimensions
+      const viewportWidth = window.innerWidth;
+
+      // Calculate left position, ensuring the dropdown doesn't go off-screen
+      let leftPos = rect.left + window.scrollX;
+
+      // If dropdown would go off the right edge, align it to the right of the button instead
+      if (leftPos + 192 > viewportWidth) { // 192px = 48rem (w-48)
+        leftPos = rect.right + window.scrollX - 192;
+      }
+
+      // Position the dropdown below the button with a small offset
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 5, // 5px offset
+        left: leftPos
+      });
+    }
+
+    setOpenDropdownId(openDropdownId === sectionId ? null : sectionId);
   };
 
   return (
@@ -127,36 +176,63 @@ const FolderItem: React.FC<FolderItemProps> = ({
                     >
                       {section.name}
                     </button>
-                    <div className="items-center">
+                    <div className="static">
                       <button
-                        className="text-gray-400 hover:text-blue-500 p-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const newName = prompt("Rename section:", section.name);
-                          if (newName && newName.trim()) {
-                            onUpdateSection(folder.id, section.id, newName.trim());
-                          }
-                        }}
-                        title="Rename section"
+                        className="text-gray-400 hover:text-gray-600 p-1 ml-1"
+                        onClick={(e) => toggleDropdown(e, section.id)}
+                        title="Section options"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
                       </button>
-                      <button
-                        className="text-gray-400 hover:text-red-500 p-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Are you sure you want to delete the section "${section.name}"?`)) {
-                            onDeleteSection(folder.id, section.id);
-                          }
-                        }}
-                        title="Delete section"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
+
+                      {openDropdownId === section.id && (
+                        <div
+                          data-dropdown-id={section.id}
+                          className="fixed w-48 bg-white dark:bg-gray-800 rounded-md shadow-xl z-[9999] border border-gray-200 dark:border-gray-700"
+                          style={{
+                            top: `${dropdownPosition.top}px`,
+                            left: `${dropdownPosition.left}px`,
+                            opacity: 1,
+                            transition: 'opacity 150ms ease-in-out'
+                          }}
+                        >
+                          <div className="py-1">
+                            <button
+                              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenDropdownId(null);
+                                const newName = prompt("Rename section:", section.name);
+                                if (newName && newName.trim()) {
+                                  onUpdateSection(folder.id, section.id, newName.trim());
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                              Rename section
+                            </button>
+                            <button
+                              className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenDropdownId(null);
+                                if (window.confirm(`Are you sure you want to delete the section "${section.name}"?`)) {
+                                  onDeleteSection(folder.id, section.id);
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                              Delete section
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
