@@ -3,6 +3,7 @@ export interface SaveItem {
   name: string;
   value: string;
   sensitive?: boolean;
+  index?: number;
 }
 
 export interface Section {

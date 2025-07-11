@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Folder } from '../types';
+import { Folder, SaveItem } from '../types';
 import FolderItem from './FolderItem';
 
 interface FolderListProps {
@@ -18,6 +18,11 @@ interface FolderListProps {
   onSelectFolder: (folderId: string | null) => void;
   onSelectSection: (sectionId: string | null) => void;
   onReorderFolders?: (folders: Folder[]) => void;
+  onReorderItems?: (folderId: string, sectionId: string, items: SaveItem[]) => void;
+  onMoveItemToSection?: (
+    sourceFolderId: string, sourceSectionId: string, itemId: string,
+    targetFolderId: string, targetSectionId: string
+  ) => void;
 }
 
 const FolderList: React.FC<FolderListProps> = ({
@@ -35,7 +40,9 @@ const FolderList: React.FC<FolderListProps> = ({
   onDeleteFolder,
   onSelectFolder,
   onSelectSection,
-  onReorderFolders
+  onReorderFolders,
+  onReorderItems,
+  onMoveItemToSection
 }) => {
   const [newFolderName, setNewFolderName] = useState('');
   const [isAddingFolder, setIsAddingFolder] = useState(false);
@@ -313,6 +320,8 @@ const FolderList: React.FC<FolderListProps> = ({
             onDeleteSaveItem={onDeleteSaveItem}
             onDeleteSection={onDeleteSection}
             onSelectSection={onSelectSection}
+            onReorderItems={onReorderItems}
+            onMoveItemToSection={onMoveItemToSection}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-64">

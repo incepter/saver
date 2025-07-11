@@ -3,14 +3,15 @@ import { Folder } from '../types';
 
 // Function to sanitize folders data for backward compatibility
 const sanitizeFolders = (folders: Folder[]): Folder[] => {
-  return folders.map((folder, index) => ({
+  return folders.map((folder, folderIndex) => ({
     ...folder,
-    index: folder.index !== undefined ? folder.index : index,
+    index: folder.index !== undefined ? folder.index : folderIndex,
     sections: folder.sections.map(section => ({
       ...section,
-      items: section.items.map(item => ({
+      items: section.items.map((item, itemIndex) => ({
         ...item,
-        sensitive: item.sensitive !== undefined ? item.sensitive : true // Default to sensitive
+        sensitive: item.sensitive !== undefined ? item.sensitive : true, // Default to sensitive
+        index: item.index !== undefined ? item.index : itemIndex // Default to current position
       }))
     }))
   }));
