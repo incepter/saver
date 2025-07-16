@@ -28,8 +28,11 @@ function App() {
       sections: [],
       index: folders.length // Set the index to place the new folder at the end
     }
-    setFolders([...folders, newFolder])
-    setActiveFolder(newFolder.id)
+    const existingFolder = folders.find((folder) => folder.name === name);
+    if (!existingFolder) {
+      setFolders([...folders, newFolder]);
+    }
+    setActiveFolder(existingFolder ? existingFolder.id : newFolder.id);
   }
 
   const handleAddSection = (folderId: string, name: string) => {
