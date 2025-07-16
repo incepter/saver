@@ -42,12 +42,15 @@ function App() {
       items: []
     }
 
-    setFolders(folders.map(folder =>
-      folder.id === folderId
-        ? { ...folder, sections: [...folder.sections, newSection] }
-        : folder
-    ))
-    setActiveSection(newSection.id)
+    const existingSection = folders.find((folder) => folder.id === folderId)?.sections.find((section) => section.name === name);
+    if (!existingSection) {
+      setFolders(folders.map(folder =>
+          folder.id === folderId
+              ? { ...folder, sections: [...folder.sections, newSection] }
+              : folder
+      ))
+    }
+    setActiveSection( existingSection ? existingSection.id : newSection.id)
   }
 
   const handleAddSaveItem = (folderId: string, sectionId: string, name: string, value: string, sensitive: boolean = true) => {
